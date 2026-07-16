@@ -942,6 +942,23 @@ bool ElasticScroll::eventHook(QEvent *e) {
 		}
 		return result;
 	}
+	case QEvent::WindowDeactivate:
+	case QEvent::WindowActivate: {
+		// A scroll gesture interrupted by an input grab (for example a
+		// Wayland compositor taking over to capture a screenshot) never
+		// delivers TouchEnd/TouchCancel, so the QScroller can stay stuck
+		// mid-fling and the elastic overscroll offset is left stranded. A
+		// Virtual edge (the chat list's stories strip) is not re-clamped by
+		// setState either, so the gap would otherwise persist until restart.
+		// On losing or regaining window activation stop the scroller and
+		// spring any stranded offset back to its resting position.
+		if (_scroller && _scroller->state() != QScroller::Inactive) {
+			_scroller->stop();
+		}
+		if (_overscroll != currentOverscrollDefault()) {
+			overscrollReturn();
+		}
+	} break;
 	}
 	return RpWidget::eventHook(e);
 }
