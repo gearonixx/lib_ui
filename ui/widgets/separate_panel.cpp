@@ -1476,6 +1476,13 @@ void SeparatePanel::initGeometry(QSize size) {
 
 void SeparatePanel::updateGeometry(QSize size) {
 	if (!_fullscreen.current()) {
+		const auto screen = this->screen();
+		const auto available = screen ? screen->availableGeometry() : QRect();
+		if (!available.isNull()) {
+			size = QSize(
+				std::min(size.width(), available.width()),
+				std::min(size.height(), available.height()));
+		}
 		size = QRect(QPoint(), size).marginsAdded(_padding).size();
 		if (_allowResize) {
 			setMinimumSize(size);
