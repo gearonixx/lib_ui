@@ -922,15 +922,20 @@ bool PopupMenu::prepareGeometryFor(
 						QPoint()),
 					parentActionWidget->size())
 				+ _st.scrollPadding);
-		} else if (padding.top()) {
-			// provide the compositor with a range for flip_y so it uses
-			// the cursor point instead of the padding's top point
+		} else {
+			// Provide the compositor with a range for flip_y so it uses
+			// the cursor point instead of the padding's top point. This
+			// must run even when padding.top() is 0 (the common case for
+			// plain popups with no additional menu padding), otherwise no
+			// anchor data reaches the compositor at all and the popup
+			// falls back to the platform's default menu-type positioner,
+			// which grows up-left from the requested geometry.
 			native->setParentControlGeometry(
 				QRect(
 					p
 						- parentWidget()->window()->pos()
 						- QPoint(padding.left(), padding.top()),
-					QSize(1, padding.top())));
+					QSize(1, std::max(padding.top(), 1))));
 			windowHandle()->setProperty(
 				"_q_waylandPopupAnchor",
 				QVariant::fromValue(Qt::TopEdge | Qt::LeftEdge));
